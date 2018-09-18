@@ -20,13 +20,10 @@ function loadObj()
         objLoader = new THREE.OBJLoader();
 
     objLoader.load(
-        'models/Spaceship/Ship.obj',
-
-        function(object)
-        {
+        'models/Spaceship/Ship.obj',function(object){
             var texture = new THREE.TextureLoader().load('models/Spaceship/Textures/sh3.jpg');
             var normalMap = new THREE.TextureLoader().load('models/Spaceship/Textures/sh3_s.jpg');
-
+            var specularMap = new THREE.TextureLoader().load('models/Spaceship/Textures/sh3_s.jpg');
             object.traverse( function ( child )
             {
                 if ( child instanceof THREE.Mesh )
@@ -35,14 +32,15 @@ function loadObj()
                     child.receiveShadow = true;
                     child.material.map = texture;
                     child.material.normalMap = normalMap;
+                    child.material.specularMap = specularMap;
                 }
             } );
 
             spaceship = object;
             spaceship.scale.set(6,6,6);
-            spaceship.rotation.x = Math.PI / 180 * 5;
-            spaceship.rotation.y = 3;
-            space.add(spaceship);
+            spaceship.position.set(7*Math.cos(0*2*Math.PI/7),-3,7*Math.sin(0*2*Math.PI/7));
+            root.add(spaceship);
+            playAnimations();
         },
         function ( xhr ) {
             console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
@@ -55,25 +53,45 @@ function loadObj()
 
 function playAnimations()
 {
+  var key = [];
+  var keyCont = 0;
+  var verts = [];
+  for (var i = 0; i <=7; i++){
+    verts.push({
+      x: 7*Math.cos(i*2*Math.PI/7),
+      y: -3,
+      z: 7*Math.sin(i*2*Math.PI/7)}
+    );
+    keyCont += (1/8);
+    key.push(keyCont);
+  }
   spaceshipAnimator = new KF.KeyFrameAnimator;
   spaceshipAnimator.init({
       interps:
           [
               {
-                  keys:[0, .25,0.5,0.75,1],
-                  values:[
-                          { x : 0, y: 0, z : 0 },
-                          { x : 0, y: -2, z : 0 },
-                          { x : 0, y: -4, z : 0 },
-                          { x : 0, y: -5, z : 0 },
-                          { x : 0, y: -6.301, z : 0 }
-                          ],
-                  target: space.rotation
+                  keys:key,
+                  values:verts,
+                  target:spaceship.position
               },
+              {
+                keys:key,
+  				    	values:[
+  				    	        { y : 0 },
+                        {y: -Math.PI/3 },
+                        {y: -2*Math.PI/3 },
+                        { y : -Math.PI  },
+                        {y: -10*Math.PI/8 },
+                        {y: -12*Math.PI/8 },
+                        {y: -14*Math.PI/8 },
+  				    	        { y : -Math.PI * 2 }
+  				    	        ],
+                  target: spaceship.rotation
+              }
           ],
       loop: true,
-      duration:duration * 1000,
-      easing:TWEEN.Easing.Sinusoidal.In
+      duration:duration * 500,
+      easing:TWEEN.Easing.Sinusoidal.InOut
   });
   spaceshipAnimator.start();
 }
@@ -151,12 +169,9 @@ function createScene(canvas) {
 
     ambientLight = new THREE.AmbientLight ( 0x888888 );
     root.add(ambientLight);
-    space = new THREE.Object3D;
-    root.add(space);
+
     // Create the objects
     loadObj();
-
-
     // Create a group to hold the objects
     group = new THREE.Object3D;
     root.add(group);
@@ -182,4 +197,5 @@ function createScene(canvas) {
 
     // Now add the group to our scene
     scene.add( root );
+
 }
